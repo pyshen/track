@@ -21,6 +21,7 @@ class dm:
         self.filename = filename
         self.create = create
         #print self.create
+        
     def opendfs(self):
         try:
             self.TSO = w32c.Dispatch("TimeSeries.TSObject")
@@ -39,21 +40,28 @@ class dm:
             else:
                 self.TSO.Connection.Open()
                 #self.TSO.Connection.GUIOpen()
+                
     def listeumtypes(self):
         self.eumtypes = self.TSI.GetEumTypes()
         #del self.TSI
+        
     def listeumunits(self):
         self.eumunits = self.TSI.GetEumUnits()
+        
     def getdata(self,itemn):
         args = self.TSO(itemn).GetData()
         return args
+    
     def gettime(self):
         args = self.TSO.Time.GetTime()
         return args
+    
     def filetitle(self,filet):
         self.TSO.Connection.FileTitle = filet
+        
     def startdate(self,time):
         self.TSO.Time.StartTime = time
+        
     def timestep(self,time):
         self.TSO.Time.TimeStep.Year = time[0]
         self.TSO.Time.TimeStep.Month = time[1]
@@ -62,14 +70,18 @@ class dm:
         self.TSO.Time.TimeStep.Minute = time[4]
         self.TSO.Time.TimeStep.Second = time[5]
         self.TSO.Time.TimeStep.Millisecond = time[6]
+        
     def deletevalue(self,dele):
         self.TSO.DeleteValue = dele
+        
     def addtimesteps(self,nstep):
         self.TSO.Time.AddTimeSteps(nstep)
+        
     def setitemeum(self,itemno,eumtype,eumunit):
         item = self.TSO.Item(itemno)
         item.EumType = eumtype
         item.EumUnit = eumunit
+        
     def additems(self,itemname,eumtype,eumunit,datatype):
         item = self.TSO.NewItem()[0]
         #print itemno
@@ -77,29 +89,38 @@ class dm:
         item.DataType = datatype
         item.AutoConversion = 'True'
         self.setitemeum(self.TSO.Count,eumtype,eumunit)
+        
     def writeitem(self,itemno,v,data):
         length = len(data)
         for i in range(length):
             self.TSO.Item(itemno).SetDataForTimeStepNr(v[i],data[i])
+            
     def writeitems(self,itemno,data):
         self.TSO.Item(itemno).SetData(data)
+        
     def itemdatatype(self,itemno,datatype):
         self.TSO.Item(itemno).DataType = datatype
+        
     def itemname(self,itemno):
         args = self.TSO.Item(itemno).Name
         return args
+    
     def save(self, force = 0):
         self.filename = self.TSO.Connection.FilePath
         self.TSO.Connection.Save()
         #self.TSO.Connection.GUISave()
+        
     def close(self):
         del self.TSO
+        
 class point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        
     def distanceTo(self, p2):
         return ((self.x - p2.x) ** 2 + (self.y - p2.y) ** 2) ** 0.5
+    
     def pointAtDist(self, dist, slope, signX, signY, before = False):
         if slope == float('inf'):
             x = self.x
@@ -177,6 +198,7 @@ def calculateTrack(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile):
     calculateMainTrack(warmupT, timeStepsMain, deltaT, slope, signX, signY, velocity, rampDistance, point1, txt)
     calculateRamp(rampDownT, timeStepsRamp + 1, deltaT, slope, signX, signY, velocity, omega, endPoint, rampDownStartDistance, txt, 1)
     txt.close()
+    
 def writeDfs0(txtfile, deltaT, startTime):
     f = open(txtfile, 'r')
     header = f.readline()
