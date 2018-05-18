@@ -22,7 +22,7 @@ class dm:
         self.create = create
         #print self.create
         
-    def opendfs(self):
+    def open_dfs(self):
         try:
             self.TSO = w32c.Dispatch("TimeSeries.TSObject")
             self.TSI = w32c.Dispatch("TimeSeries.TSItem")
@@ -41,18 +41,18 @@ class dm:
                 self.TSO.Connection.Open()
                 #self.TSO.Connection.GUIOpen()
                 
-    def listeumtypes(self):
+    def list_eumtypes(self):
         self.eumtypes = self.TSI.GetEumTypes()
         #del self.TSI
         
-    def listeumunits(self):
+    def list_eumunits(self):
         self.eumunits = self.TSI.GetEumUnits()
         
-    def getdata(self,itemn):
+    def get_data(self,itemn):
         args = self.TSO(itemn).GetData()
         return args
     
-    def gettime(self):
+    def get_time(self):
         args = self.TSO.Time.GetTime()
         return args
     
@@ -71,18 +71,18 @@ class dm:
         self.TSO.Time.TimeStep.Second = time[5]
         self.TSO.Time.TimeStep.Millisecond = time[6]
         
-    def deletevalue(self,dele):
+    def delete_value(self,dele):
         self.TSO.DeleteValue = dele
         
-    def addtimesteps(self,nstep):
+    def add_timesteps(self,nstep):
         self.TSO.Time.AddTimeSteps(nstep)
         
-    def setitemeum(self,itemno,eumtype,eumunit):
+    def set_itemeum(self,itemno,eumtype,eumunit):
         item = self.TSO.Item(itemno)
         item.EumType = eumtype
         item.EumUnit = eumunit
         
-    def additems(self,itemname,eumtype,eumunit,datatype):
+    def add_items(self,itemname,eumtype,eumunit,datatype):
         item = self.TSO.NewItem()[0]
         #print itemno
         item.Name = itemname
@@ -90,18 +90,18 @@ class dm:
         item.AutoConversion = 'True'
         self.setitemeum(self.TSO.Count,eumtype,eumunit)
         
-    def writeitem(self,itemno,v,data):
+    def write_item(self,itemno,v,data):
         length = len(data)
         for i in range(length):
             self.TSO.Item(itemno).SetDataForTimeStepNr(v[i],data[i])
             
-    def writeitems(self,itemno,data):
+    def write_items(self,itemno,data):
         self.TSO.Item(itemno).SetData(data)
         
-    def itemdatatype(self,itemno,datatype):
+    def item_datatype(self,itemno,datatype):
         self.TSO.Item(itemno).DataType = datatype
         
-    def itemname(self,itemno):
+    def item_name(self,itemno):
         args = self.TSO.Item(itemno).Name
         return args
     
@@ -118,10 +118,10 @@ class point:
         self.x = x
         self.y = y
         
-    def distanceTo(self, p2):
+    def distance_to(self, p2):
         return ((self.x - p2.x) ** 2 + (self.y - p2.y) ** 2) ** 0.5
     
-    def pointAtDist(self, dist, slope, signX, signY, before = False):
+    def point_at_dist(self, dist, slope, signX, signY, before=False):
         if slope == float('inf'):
             x = self.x
             if before and signY > 0:
@@ -138,31 +138,31 @@ class point:
             y = self.y + deltaX * slope
         return point(x, y)
 
-def calSlope(p1, p2):
+def cal_slope(p1, p2):
     if abs(p1.x - p2.x) < 0.001:
         return float('inf')
     else:
         return (p1.y - p2.y) * 1.0 / (p1.x - p2.x)
 
-def writeTrack(txt, time, point, dist, v):
+def write_track(txt, time, point, dist, v):
     txt.write('%10.1f %13.6f %13.6f %10.6f % 10.6f\n' % (time, point.x, point.y, dist, v))
 
-def calculateRamp(starttime, timesteps, deltaT, slope, signX, signY, velocity, omega, rampStartPoint, startDistance, txt, sign):
+def calculate_ramp(starttime, timesteps, deltaT, slope, signX, signY, velocity, omega, rampStartPoint, startDistance, txt, sign):
     for timestep in range(int(timesteps)):
         t = timestep * deltaT
         v = sign * velocity / 2. * math.cos(omega * t) + velocity / 2.
         dist = sign * velocity / 2. * (math.sin(omega * t) / omega + sign * t)
-        pt = rampStartPoint.pointAtDist(dist, slope, signX, signY)
-        writeTrack(txt, t + starttime, pt, dist + startDistance, v)
+        pt = rampStartPoint.point_at_dist(dist, slope, signX, signY)
+        write_track(txt, t + starttime, pt, dist + startDistance, v)
 
-def calculateMainTrack(warmupT, timesteps, deltaT, slope, signX, signY, velocity, rampDistance, point1, txt):
+def calculate_maintrack(warmupT, timesteps, deltaT, slope, signX, signY, velocity, rampDistance, point1, txt):
     for timestep in range(int(timesteps)):
         t = timestep * deltaT
-        pt = point1.pointAtDist(t * velocity, slope, signX, signY)
+        pt = point1.point_at_dist(t * velocity, slope, signX, signY)
         dist = t * velocity + rampDistance
-        writeTrack(txt, t + warmupT, pt, dist, velocity)
+        write_track(txt, t + warmupT, pt, dist, velocity)
 
-def calculateTrack(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile):
+def calculate_track(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile):
 
     point1 = point(x1, y1)
     point2 = point(x2, y2)
@@ -171,23 +171,23 @@ def calculateTrack(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile):
     signY = point2.y - point1.y
 
     # mainTrack time step
-    trackDist = point1.distanceTo(point2)
+    trackDist = point1.distance_to(point2)
     mainTrackT = trackDist / velocity
     timeStepsMain = round(mainTrackT / deltaT)
     # update trackDist and endPoint(full speed) with the rounded timeSteps
     mainTrackT = timeStepsMain * deltaT
     trackDist = timeStepsMain * deltaT * velocity
-    endPoint = point1.pointAtDist(trackDist, slope, signX, signY)
+    endPoint = point1.point_at_dist(trackDist, slope, signX, signY)
    
    # ramp points
-    rampStartPoint = point1.pointAtDist(rampDistance, slope, signX, signY, before = True) 
+    rampStartPoint = point1.point_at_dist(rampDistance, slope, signX, signY, before = True) 
     warmupT = rampDistance / velocity * 2
     timeStepsRamp = round(warmupT / deltaT)
     # update warmupT with rounded time steps
     warmupT = timeStepsRamp * deltaT
     omega = math.pi / warmupT
     rampDistance = warmupT * velocity / 2
-    rampStartPoint = point1.pointAtDist(rampDistance, slope, signX, signY, before = True)
+    rampStartPoint = point1.point_at_dist(rampDistance, slope, signX, signY, before = True)
     #ramp down parameters
     rampDownT = warmupT + mainTrackT
     rampDownStartDistance = rampDistance + trackDist
@@ -199,7 +199,7 @@ def calculateTrack(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile):
     calculateRamp(rampDownT, timeStepsRamp + 1, deltaT, slope, signX, signY, velocity, omega, endPoint, rampDownStartDistance, txt, 1)
     txt.close()
     
-def writeDfs0(txtfile, deltaT, startTime):
+def write_dfs0(txtfile, deltaT, startTime):
     f = open(txtfile, 'r')
     header = f.readline()
     item1, item2, item3, item4, item5 = header.split()
@@ -220,31 +220,31 @@ def writeDfs0(txtfile, deltaT, startTime):
         d.append(float(m[3]))
         v.append(float(m[4]))
     dfs = dm(txtfile[:-4] + '.dfs0', 1)
-    dfs.opendfs()
+    dfs.open_dfs()
     dfs.filetitle('track')
     dfs.startdate(startTime)
     seconds = int(deltaT)
     milliseconds = (deltaT - seconds) * 1000 
     dfs.timestep([0, 0 , 0, 0, 0, seconds, milliseconds])
-    dfs.addtimesteps(n)
-    dfs.listeumtypes()
-    dfs.listeumunits()
+    dfs.add_timesteps(n)
+    dfs.list_eumtypes()
+    dfs.list_eumunits()
     eumunit = 1
     eumtype = dfs.eumtypes.index(u'TimeStep') + 1
-    dfs.additems(item1, eumtype, eumunit, 2)
+    dfs.add_items(item1, eumtype, eumunit, 2)
     eumtype = dfs.eumtypes.index(u'Undefined') + 1
-    dfs.additems(item2, eumtype, eumunit, 2)
+    dfs.add_items(item2, eumtype, eumunit, 2)
     eumtype = dfs.eumtypes.index(u'Undefined') + 1
-    dfs.additems(item3, eumtype, eumunit, 2)
+    dfs.add_items(item3, eumtype, eumunit, 2)
     eumtype = dfs.eumtypes.index(u'Distance') + 1
-    dfs.additems(item4, eumtype, eumunit, 2)
+    dfs.add_items(item4, eumtype, eumunit, 2)
     eumtype = dfs.eumtypes.index(u'Velocity Profile') + 1
-    dfs.additems(item5, eumtype, eumunit, 2)
-    dfs.writeitem(1,timeindex,time)
-    dfs.writeitem(2,timeindex,x)                    
-    dfs.writeitem(3,timeindex,y)
-    dfs.writeitem(4,timeindex,d)
-    dfs.writeitem(5,timeindex,v)
+    dfs.add_items(item5, eumtype, eumunit, 2)
+    dfs.write_item(1,timeindex,time)
+    dfs.write_item(2,timeindex,x)                    
+    dfs.write_item(3,timeindex,y)
+    dfs.write_item(4,timeindex,d)
+    dfs.write_item(5,timeindex,v)
     dfs.save()
     dfs.close()
 if __name__ == "__main__":
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     rampDistance = 500
     startTime = datetime.datetime(2018, 1, 1, 0, 0, 0)
     outfile = 'track.txt'
-    calculateTrack(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile)
+    calculate_track(x1, y1, x2, y2, deltaT, velocity, rampDistance, outfile)
     print(outfile + " has been created")
     writeDfs0(outfile, deltaT, startTime)
     print("dfs0 has been created")
